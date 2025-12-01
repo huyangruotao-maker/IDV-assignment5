@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>IDV Assignment 5 – Integrated Visualization Page</title>
+
+  <style>
+    :root {
+      --bg-main: radial-gradient(circle at top, #0f172a 0, #020617 55%, #000 100%);
+      --card-bg: rgba(15, 23, 42, 0.9);
+      --card-border: rgba(148, 163, 184, 0.3);
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --accent-strong: #0ea5e9;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --pill-bg: rgba(15, 118, 110, 0.4);
+      --pill-border: rgba(45, 212, 191, 0.7);
+      --nav-bg: rgba(15, 23, 42, 0.92);
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.75);
+      --radius-xl: 18px;
+      --radius-2xl: 24px;
+      --radius-full: 999px;
+      --transition-fast: 180ms ease-out;
+      --max-width: 1200px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    .page {
+      width: 100%;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    /* 顶部标题区 */
+
+    .hero {
+      margin-top: 20px;
+      margin-bottom: 16px;
+      padding: 28px 24px 24px;
+      border-radius: var(--radius-2xl);
+      background: linear-gradient(
+          135deg,
+          rgba(56, 189, 248, 0.18),
+          rgba(59, 130, 246, 0)
+        ),
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.35), transparent 60%),
+        rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        circle at 120% -10%,
+        rgba(56, 189, 248, 0.2),
+        transparent 55%
+      );
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.3fr);
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 880px) {
+      .hero-content {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .hero-title {
+      font-size: clamp(1.9rem, 2.4vw + 1.2rem, 2.6rem);
+      letter-spacing: 0.03em;
+      margin: 0 0 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .hero-title span.code {
+      font-size: 0.82em;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.7);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .hero-subtitle {
+      margin: 4px 0 14px;
+      font-size: 0.96rem;
+      color: var(--text-muted);
+      max-width: 44rem;
+      line-height: 1.6;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      border: 1px solid var(--pill-border);
+      background: var(--pill-bg);
+      color: #ccfbf1;
+      white-space: nowrap;
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.35);
+    }
+
+    .hero-badges {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .hero-badge {
+      padding: 9px 11px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .hero-badge strong {
+      display: block;
+      font-size: 0.78rem;
+      color: #e5e7eb;
+      margin-bottom: 3px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero-stats {
+      position: relative;
+      z-index: 1;
+      align-self: stretch;
+      padding: 16px 18px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: radial-gradient(
+          circle at top right,
+          rgba(56, 189, 248, 0.28),
+          transparent 60%
+        ),
+        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.25), transparent 55%),
+        rgba(15, 23, 42, 0.95);
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.8);
+    }
+
+    .hero-stats-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: rgba(226, 232, 240, 0.9);
+      margin: 0 0 10px;
+    }
+
+    .hero-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .hero-stat {
+      padding: 9px 9px 8px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      font-size: 0.8rem;
+    }
+
+    .hero-stat-label {
+      color: var(--text-muted);
+      margin-bottom: 3px;
+      font-size: 0.74rem;
+    }
+
+    .hero-stat-value {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    .hero-stat-badge {
+      font-size: 0.72rem;
+      color: #bae6fd;
+      margin-top: 4px;
+    }
+
+    .hero-note {
+      font-size: 0.76rem;
+      color: rgba(148, 163, 184, 0.95);
+      margin: 0;
+      padding-top: 6px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.4);
+    }
+
+    /* 顶部导航条 */
+
+    .nav-shell {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      margin-bottom: 14px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      background: var(--nav-bg);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 14px 35px rgba(15, 23, 42, 0.9);
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .nav-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--accent-strong);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35);
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .nav-link {
+      font-size: 0.8rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      transition: background-color var(--transition-fast),
+        border-color var(--transition-fast),
+        color var(--transition-fast),
+        transform var(--transition-fast);
+    }
+
+    .nav-link span.code {
+      font-size: 0.78em;
+      opacity: 0.8;
+    }
+
+    .nav-link:hover {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: rgba(148, 163, 184, 0.7);
+      color: #e5e7eb;
+      transform: translateY(-1px);
+    }
+
+    .nav-link.active {
+      background: var(--accent-soft);
+      border-color: var(--accent-strong);
+      color: #e0f2fe;
+    }
+
+    @media (max-width: 720px) {
+      .nav {
+        flex-direction: column;
+        align-items: stretch;
+        border-radius: 16px;
+      }
+      .nav-links {
+        justify-content: flex-start;
+      }
+    }
+
+    /* 概述区文本 */
+
+    .overview {
+      margin-top: 4px;
+      padding: 18px 16px 14px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.8);
+    }
+
+    .overview h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(226, 232, 240, 0.95);
+    }
+
+    .overview-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1.4fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 880px) {
+      .overview-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .overview p {
+      margin: 0 0 8px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    .overview p strong {
+      color: #e5e7eb;
+    }
+
+    .overview-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+    }
+
+    .overview-list li {
+      padding: 4px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .overview-bullet {
+      margin-top: 6px;
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    /* 作业 section 容器 */
+
+    main {
+      margin-top: 24px;
+    }
+
+    .assignment-section {
+      margin-bottom: 28px;
+      padding: 22px 18px 20px;
+      border-radius: var(--radius-2xl);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+    }
+
+    .assignment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .assignment-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .assignment-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-muted);
+    }
+
+    .assignment-heading {
+      margin: 0;
+      font-size: 1.02rem;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .assignment-code-tag {
+      font-size: 0.8rem;
+      padding: 2px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--accent-strong);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .assignment-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .assignment-meta span {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .assignment-description {
+      margin: 0 0 12px;
+      font-size: 0.86rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* iframe 容器 */
+
+    .assignment-frame {
+      margin-top: 6px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #020617;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.95);
+    }
+
+    .assignment-frame iframe {
+      display: block;
+      width: 100%;
+      min-height: 480px;
+      border: none;
+      background: #020617;
+    }
+
+    /* 底部 footer */
+
+    footer {
+      margin-top: 16px;
+      padding: 10px 4px 4px;
+      font-size: 0.75rem;
+      color: rgba(148, 163, 184, 0.9);
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <!-- 顶部标题 -->
+    <header class="hero" id="overview">
+      <div class="hero-content">
+        <div>
+          <h1 class="hero-title">
+            IDV Assignment 5
+            <span class="code">Integrated Visualizations</span>
+          </h1>
+          <p class="hero-subtitle">
+            This single web page integrates work from Assignments 1–4:
+            an API-driven PSI table, SVG transformations, a multi-chart D3
+            dashboard, and a robustness benchmark dashboard. All original
+            functionality is preserved; the outer layout and navigation
+            provide a unified, “one-page” experience.
+          </p>
+
+          <div class="hero-tags">
+            <div class="pill">
+              <span class="pill-dot"></span>
+              Integrated Page
+            </div>
+            <div class="pill">A1 – A4 Combined</div>
+            <div class="pill">Single-Page Layout</div>
+          </div>
+
+          <div class="hero-badges">
+            <div class="hero-badge">
+              <strong>Integration Approach</strong>
+              Each assignment is embedded as an isolated, fully functional
+              module using iframes. This keeps the original HTML/CSS/JS
+              unchanged while giving them a consistent frame and navigation.
+            </div>
+            <div class="hero-badge">
+              <strong>Layout Strategy</strong>
+              A dark, high-contrast shell wraps all assignments with shared
+              spacing, typography, and section structure so the page
+              reads as one coherent dashboard.
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-stats">
+          <h2 class="hero-stats-title">Overview & Difficulties</h2>
+          <div class="hero-stats-grid">
+            <div class="hero-stat">
+              <div class="hero-stat-label">
+                Assignments merged
+              </div>
+              <div class="hero-stat-value">4</div>
+              <div class="hero-stat-badge">
+                A1 – A4 in one page
+              </div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-label">
+                Layout consistency
+              </div>
+              <div class="hero-stat-value">High</div>
+              <div class="hero-stat-badge">
+                Shared shell + sections
+              </div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-label">
+                Hardest to integrate
+              </div>
+              <div class="hero-stat-value">A4</div>
+              <div class="hero-stat-badge">
+                Complex D3 + layout
+              </div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-label">
+                Horizontal scrolling
+              </div>
+              <div class="hero-stat-value">None</div>
+              <div class="hero-stat-badge">
+                Main page kept scroll-free on X-axis
+              </div>
+            </div>
+          </div>
+          <p class="hero-note">
+            Main challenge: Assignments 3 &amp; 4 use tightly coupled D3 code
+            and custom full-page layouts. Instead of rewriting them, they are
+            embedded as self-contained modules inside a unified shell so that
+            all interactions still work without breaking their internal code.
+          </p>
+        </aside>
+      </div>
+    </header>
+
+    <!-- 导航条 -->
+    <div class="nav-shell">
+      <nav class="nav">
+        <div class="nav-left">
+          <span class="nav-dot"></span>
+          <span>Sections</span>
+        </div>
+        <div class="nav-links">
+          <button class="nav-link active" data-target="#overview">
+            Overview
+          </button>
+          <button class="nav-link" data-target="#a1">
+            <span class="code">A1</span>&nbsp;PSI Table
+          </button>
+          <button class="nav-link" data-target="#a2">
+            <span class="code">A2</span>&nbsp;SVG Grid
+          </button>
+          <button class="nav-link" data-target="#a3">
+            <span class="code">A3</span>&nbsp;Five Charts
+          </button>
+          <button class="nav-link" data-target="#a4">
+            <span class="code">A4</span>&nbsp;Robustness Dashboard
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Overview 段落描述，满足作业要求的说明文字 -->
+    <section class="overview">
+      <h2>Integration Overview</h2>
+      <div class="overview-grid">
+        <div>
+          <p>
+            This page brings together all four previous assignments into a
+            single, coherent layout:
+          </p>
+          <ul class="overview-list">
+            <li>
+              <span class="overview-bullet"></span>
+              <span><strong>Assignment 1:</strong> Singapore PSI realtime data table driven by an API.</span>
+            </li>
+            <li>
+              <span class="overview-bullet"></span>
+              <span><strong>Assignment 2:</strong> 10 base images with 5 SVG variants each, arranged as a transformation grid.</span>
+            </li>
+            <li>
+              <span class="overview-bullet"></span>
+              <span><strong>Assignment 3:</strong> A D3-based dashboard with five linked charts (including Venn and chord diagrams).</span>
+            </li>
+            <li>
+              <span class="overview-bullet"></span>
+              <span><strong>Assignment 4:</strong> A robustness benchmark dashboard comparing different models and conditions (JSON data + D3).</span>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <p>
+            <strong>How the assignments were merged:</strong> instead of
+            rewriting each visualization, the original HTML/CSS/JS for A1–A4
+            is kept intact in their own subfolders. Each assignment is then
+            embedded into this page using an iframe inside a shared “card”
+            layout. The outer shell unifies typography, spacing, colors, and
+            navigation, while each assignment runs as an independent module.
+          </p>
+          <p>
+            <strong>Difficulties &amp; hardest assignment:</strong> the most
+            challenging parts were Assignments 3 and 4 because they rely on
+            D3, custom SVG sizing, and page-level layout assumptions. Moving
+            their code directly into a new HTML file risked breaking
+            transitions or chart sizing. Therefore, Assignment 4 in
+            particular was considered the hardest to integrate, and the
+            solution was to keep its code untouched and integrate it through
+            a framed container with automatic height adjustment.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- A1 -->
+    <main>
+      <section class="assignment-section" id="a1">
+        <div class="assignment-header">
+          <div class="assignment-title-group">
+            <div class="assignment-label">Assignment 1</div>
+            <h2 class="assignment-heading">
+              Singapore PSI Realtime Table
+              <span class="assignment-code-tag">A1</span>
+            </h2>
+          </div>
+          <div class="assignment-meta">
+            <span>API-driven data table</span>
+            <span>Live PSI readings</span>
+          </div>
+        </div>
+        <p class="assignment-description">
+          This section embeds the original Assignment 1 page, which fetches
+          real-time PSI data and renders a styled data table. All API calls,
+          formatting, and interaction behaviours are preserved exactly as in
+          the original submission.
+        </p>
+        <div class="assignment-frame">
+          <!-- 路径假设：将 A1 解压后的文件夹完整放在同一仓库中 -->
+          <iframe
+            src="IDV-assignment1-main/IDV-assignment1-main/index.html"
+            loading="lazy"
+            data-auto-height="true"
+            title="Assignment 1 – PSI Realtime Table"
+          ></iframe>
+        </div>
+      </section>
+
+      <!-- A2 -->
+      <section class="assignment-section" id="a2">
+        <div class="assignment-header">
+          <div class="assignment-title-group">
+            <div class="assignment-label">Assignment 2</div>
+            <h2 class="assignment-heading">
+              SVG Transformations Grid
+              <span class="assignment-code-tag">A2</span>
+            </h2>
+          </div>
+          <div class="assignment-meta">
+            <span>10 images × 5 variants</span>
+            <span>SVG transformations</span>
+          </div>
+        </div>
+        <p class="assignment-description">
+          This section embeds the SVG transformation table from Assignment 2.
+          The original layout (10 base images and 5 variants per row) is
+          preserved, including all SVG effects such as rotation, mirroring,
+          squeezing, and grayscale.
+        </p>
+        <div class="assignment-frame">
+          <iframe
+            src="IDV-assignment2.github.io-main/IDV-assignment2.github.io-main/index.html"
+            loading="lazy"
+            data-auto-height="true"
+            title="Assignment 2 – SVG Transformations Grid"
+          ></iframe>
+        </div>
+      </section>
+
+      <!-- A3 -->
+      <section class="assignment-section" id="a3">
+        <div class="assignment-header">
+          <div class="assignment-title-group">
+            <div class="assignment-label">Assignment 3</div>
+            <h2 class="assignment-heading">
+              Week 8 &mdash; Five D3 Charts
+              <span class="assignment-code-tag">A3</span>
+            </h2>
+          </div>
+          <div class="assignment-meta">
+            <span>D3 visualizations</span>
+            <span>Multiple coordinated charts</span>
+          </div>
+        </div>
+        <p class="assignment-description">
+          This section embeds the multi-chart D3 page from Assignment 3,
+          including the bar chart, line chart, Venn diagram, chord diagram,
+          and other visualizations. All animations, transitions, and
+          interactions continue to run inside this unified shell.
+        </p>
+        <div class="assignment-frame">
+          <iframe
+            src="IDV-assignment3.github.io-main/IDV-assignment3.github.io-main/index.html"
+            loading="lazy"
+            data-auto-height="true"
+            title="Assignment 3 – Five D3 Charts"
+          ></iframe>
+        </div>
+      </section>
+
+      <!-- A4 -->
+      <section class="assignment-section" id="a4">
+        <div class="assignment-header">
+          <div class="assignment-title-group">
+            <div class="assignment-label">Assignment 4</div>
+            <h2 class="assignment-heading">
+              Robustness Benchmark Dashboard
+              <span class="assignment-code-tag">A4</span>
+            </h2>
+          </div>
+          <div class="assignment-meta">
+            <span>D3 + JSON data</span>
+            <span>Model robustness comparison</span>
+          </div>
+        </div>
+        <p class="assignment-description">
+          This section embeds the robustness benchmark dashboard from
+          Assignment 4. It loads JSON data files, renders multiple charts
+          using D3, and provides interactive elements to compare different
+          models and settings. The internal implementation is unchanged; only
+          the outer framing and navigation are new.
+        </p>
+        <div class="assignment-frame">
+          <iframe
+            src="IDV-assignment4.github.io-main (1)/IDV-assignment4.github.io-main/index.html"
+            loading="lazy"
+            data-auto-height="true"
+            title="Assignment 4 – Robustness Benchmark Dashboard"
+          ></iframe>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      IDV Assignment 5 &mdash; Integrated page for Assignments 1–4
+    </footer>
+  </div>
+
+  <script>
+    // Smooth section navigation + active state
+    const navLinks = document.querySelectorAll(".nav-link");
+    navLinks.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-target");
+        if (target) {
+          const el = document.querySelector(target);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      });
+    });
+
+    function updateActiveNav() {
+      const sections = [
+        "#overview",
+        "#a1",
+        "#a2",
+        "#a3",
+        "#a4",
+      ].map((id) => document.querySelector(id));
+
+      const scrollY = window.scrollY;
+      let activeId = "#overview";
+
+      sections.forEach((sec) => {
+        if (!sec) return;
+        const rect = sec.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        if (scrollY >= top - 120) {
+          activeId = "#" + sec.id;
+        }
+      });
+
+      navLinks.forEach((btn) => {
+        const target = btn.getAttribute("data-target");
+        if (target === activeId) {
+          btn.classList.add("active");
+        } else if (target === null && activeId === "#overview") {
+          btn.classList.add("active");
+        } else if (target !== activeId) {
+          btn.classList.remove("active");
+        }
+      });
+    }
+
+    window.addEventListener("scroll", updateActiveNav);
+    updateActiveNav();
+
+    // 自动根据内容高度调整 iframe 高度（同域时有效）
+    function resizeIframe(iframe) {
+      if (!iframe || !iframe.contentWindow) return;
+      try {
+        const doc = iframe.contentWindow.document;
+        if (!doc || !doc.body) return;
+        const newHeight = doc.body.scrollHeight + 20; // extra padding
+        if (newHeight > 0) {
+          iframe.style.height = newHeight + "px";
+        }
+      } catch (e) {
+        // 跨域时会报错，此时保留默认高度
+        console.warn("Could not auto-resize iframe:", e);
+      }
+    }
+
+    const autoIframes = document.querySelectorAll("iframe[data-auto-height]");
+    autoIframes.forEach((iframe) => {
+      iframe.addEventListener("load", () => resizeIframe(iframe));
+    });
+
+    window.addEventListener("resize", () => {
+      autoIframes.forEach((iframe) => resizeIframe(iframe));
+    });
+  </script>
+</body>
+</html>
