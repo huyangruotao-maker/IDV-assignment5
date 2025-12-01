@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Week 8 — Five Charts (D3, Venn + Chord)</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    :root{--bg:#fbfbfb;--ink:#0f172a;--muted:#64748b;--grid:#e2e8f0;--accent:#2563eb}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial}
+    header{padding:18px 14px;border-bottom:1px solid var(--grid)}
+    h1{font-size:20px;margin:0 0 6px}
+    p.caption{margin:2px 0 0;color:var(--muted)}
+    .wrap{max-width:980px;margin:0 auto;padding:14px}
+    section{background:#fff;border:1px solid var(--grid);border-radius:14px;padding:14px 14px 8px;margin:14px 0;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+    h2{font-size:16px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+    .pill{display:inline-block;padding:2px 8px;border:1px solid var(--grid);border-radius:999px;color:var(--muted);font-size:12px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+    button,input[type="range"]{font:inherit;border:1px solid var(--grid);background:#fff;border-radius:999px;padding:4px 10px;cursor:pointer}
+    input[type="range"]{padding:0 6px;border-radius:6px}
+    svg{width:100%;height:auto;display:block}
+    .grid line{stroke:var(--grid)}
+    .axis path,.axis line{stroke:#cbd5e1}
+    .legend{font-size:12px;fill:var(--muted)}
+    .note{font-size:12px;color:var(--muted);margin:6px 0 0}
+    .tip{position:fixed;pointer-events:none;background:#111827;color:#fff;padding:6px 8px;border-radius:6px;font-size:12px;opacity:0;transform:translate(-50%,-140%)}
+    .fade{opacity:.15}
+  </style>
+</head>
+<body>
+  <header class="wrap">
+    <h1>Week 8 — Five Charts (revised)</h1>
+    <p class="caption">Per your request: #1 switched to a 3‑set Venn (like the reference), ALL text is in English, and the annotation text under #5 is removed. The rest (#2/#3/#4) stay interactive.</p>
+  </header>
+
+  <main class="wrap">
+    <!-- Chart 1: 3-set Venn (static, Roman numerals) -->
+    <section>
+      <h2>Chart 1 · Venn <span class="pill">3 sets + animation</span></h2>
+      <div id="venn"></div>
+    </section>
+
+    <!-- Chart 2: Route (Grid + Path) with drawn path animation + mover speed control -->
+    <section>
+      <h2>Chart 2 · Optimised Route <span class="pill">grid + animated path</span></h2>
+      <div class="toolbar">
+        <label>Speed <input id="route-speed" type="range" min="1" max="10" value="5"></label>
+        <button id="route-shuffle">Randomise Stops</button>
+      </div>
+      <div id="route"></div>
+    </section>
+
+    <!-- Chart 3: Frequency (Bars) with sort / shuffle and hover value -->
+    <section>
+      <h2>Chart 3 · Frequency <span class="pill">bars + sort</span></h2>
+      <div class="toolbar">
+        <button id="bars-sort">Sort Desc</button>
+        <button id="bars-shuffle">Shuffle</button>
+      </div>
+      <div id="freq"></div>
+    </section>
+
+    <!-- Chart 4: Math (sin/cos) with draggable phase handle -->
+    <section>
+      <h2>Chart 4 · Math Plots <span class="pill">sin & cos + φ control</span></h2>
+      <div class="toolbar">
+        <label>Phase φ <input id="phase" type="range" min="-314" max="314" step="1" value="0"></label>
+      </div>
+      <div id="math"></div>
+    </section>
+
+    <!-- Chart 5: Chord Diagram (hover fade, random weights) -->
+    <section>
+      <h2>Chart 5 · Chord Diagram <span class="pill">matrix → flows</span></h2>
+      <div class="toolbar">
+        <button id="chord-random">Random Weights</button>
+        <button id="chord-reset">Reset</button>
+      </div>
+      <div id="chord"></div>
+    </section>
+  </main>
+
+  <div class="tip" id="tip"></div>
+
+  <script>
+    const TBL = d3.schemeTableau10;
+    const tip = d3.select('#tip');
+    function showTip(html, [x,y]){ tip.style('opacity',1).html(html).style('left',x+15+'px').style('top',y+'px'); }
+    function hideTip(){ tip.style('opacity',0); }
+
+    function mountSVG(sel, {w=820, h=420, margin={top:24,right:24,bottom:40,left:44}}={}){
+      const width = w, height = h;
+      const svg = d3.select(sel).append('svg')
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+      const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+      const inner = {w: width - margin.left - margin.right, h: height - margin.top - margin.bottom};
+      return {svg, g, inner, margin, width, height};
+    }
+
+    // ------- 1) Venn (3 sets, Roman numerals, English labels, animated) -------
+    (function(){
+      const {svg, g, inner, width, height} = mountSVG('#venn');
+      const R = Math.min(inner.w, inner.h)*0.24; // responsive radius
+      const cx = width/2, cy = height/2 + R*0.05;
+      const A = {x: cx - R*0.95, y: cy + R*0.08, name:'Delete',  color:'#c7c5eb'};
+      const C = {x: cx + R*0.95, y: cy + R*0.08, name:'Rewrite', color:'#ecd889'};
+      const B = {x: cx,           y: cy - R*0.78, name:'Replace', color:'#cdb8be'}; // top
+      const centers = [A,C,B];
+
+      // circles with entry animation
+      const cg = g.append('g').attr('opacity',0.95);
+      const circles = cg.selectAll('circle').data(centers).enter().append('circle')
+        .attr('cx', d=>d.x).attr('cy', d=>d.y)
+        .attr('r', 0)
+        .attr('fill', d=>d.color).attr('fill-opacity',0.35)
+        .attr('stroke','#94a3b8').attr('stroke-width',1.2)
+        .transition().delay((d,i)=> i*120).duration(700).ease(d3.easeCubicOut)
+        .attr('r', R);
+
+      // outer labels
+      g.append('text').attr('x', B.x).attr('y', B.y - R - 16).attr('text-anchor','middle').attr('font-size',16).text('Replace');
+      g.append('text').attr('x', A.x - R - 28).attr('y', A.y + 6).attr('text-anchor','end').attr('font-size',16).text('Delete');
+      g.append('text').attr('x', C.x + R + 28).attr('y', C.y + 6).attr('text-anchor','start').attr('font-size',16).text('Rewrite');
+
+      // helper for midpoints
+      const mid = (p,q,dx=0,dy=0)=> ({x:(p.x+q.x)/2 + dx, y:(p.y+q.y)/2 + dy});
+
+      // refined Roman numeral positions
+      const labelPos = [
+        {p:{x:A.x - R*0.34, y:A.y + R*0.28}, t:'I'},        // A only
+        {p:{x:B.x,          y:B.y - R*0.05}, t:'II'},       // B only
+        {p:{x:C.x + R*0.34, y:C.y + R*0.28}, t:'III'},      // C only
+        {p:mid(A,B, -R*0.12,  R*0.04),       t:'IV'},       // A∩B
+        {p:mid(B,C,  R*0.12,  R*0.04),       t:'V'},        // B∩C
+        {p:mid(A,C,  R*0.06,  R*0.20),       t:'VI'},       // A∩C (bottom lens)
+        {p:{x:(A.x+B.x+C.x)/3, y:(A.y+B.y+C.y)/3 + R*0.05}, t:'VII'} // triple
+      ];
+      const labels = g.selectAll('text.r').data(labelPos).enter().append('text')
+        .attr('class','r').attr('x', d=>d.p.x).attr('y', d=>d.p.y)
+        .attr('text-anchor','middle').attr('font-size',18).attr('font-weight',600)
+        .style('opacity',0)
+        .text(d=>d.t)
+        .transition().delay(420).duration(500).style('opacity',1);
+
+      // hover highlight (with click lock)
+      const hit = g.selectAll('circle.hit').data(centers).enter().append('circle')
+        .attr('class','hit').attr('cx',d=>d.x).attr('cy',d=>d.y).attr('r',R)
+        .attr('fill','transparent').style('cursor','pointer');
+
+      let locked = null;
+      function setState(idx){
+        g.selectAll('circle').attr('fill-opacity', (d,i)=> (idx==null||i===idx)? 0.42 : 0.18);
+        g.selectAll('circle').attr('stroke-width', (d,i)=> (idx==null||i===idx)? 1.8 : 1.0);
+      }
+      setState(null);
+      hit.on('mousemove', (e, d)=>{ if(locked!=null) return; const idx=centers.indexOf(d); setState(idx); })
+         .on('mouseout', ()=>{ if(locked!=null) return; setState(null); })
+         .on('click', (e,d)=>{ const idx=centers.indexOf(d); locked = (locked===idx? null : idx); setState(locked); });
+    })();
+
+    // ------- 2) Route (unchanged logic, English UI) -------
+    (function(){
+      const {svg, g, inner} = mountSVG('#route');
+      let cols=20, rows=10;
+      const cellW = inner.w/cols, cellH = inner.h/rows;
+      for(let i=0;i<=cols;i++) g.append('line').attr('x1',i*cellW).attr('x2',i*cellW).attr('y1',0).attr('y2',inner.h).attr('stroke','#e2e8f0');
+      for(let j=0;j<=rows;j++) g.append('line').attr('x1',0).attr('x2',inner.w).attr('y1',j*cellH).attr('y2',j*cellH).attr('stroke','#e2e8f0');
+      const start={c:2,r:8}; let stops=[{c:5,r:7},{c:9,r:5},{c:12,r:4}]; const end={c:16,r:2};
+      function toXY(p){ return [p.c*cellW + cellW/2, p.r*cellH + cellH/2]; }
+      function manhattan(a,b){ const pts=[]; let c=a.c, r=a.r; const dc=Math.sign(b.c-c), dr=Math.sign(b.r-r); while(c!==b.c){ c+=dc; pts.push({c,r}); } while(r!==b.r){ r+=dr; pts.push({c,r}); } return pts; }
+      function buildPath(){ const all=[start,...stops,end]; let cells=[]; for(let i=0;i<all.length-1;i++) cells=cells.concat(manhattan(all[i],all[i+1])); return [toXY(start)].concat(cells.map(toXY)); }
+      const line = d3.line().curve(d3.curveStep); const path = g.append('path').attr('fill','none').attr('stroke',TBL[2]).attr('stroke-width',3); const mover = g.append('circle').attr('r',6).attr('fill',TBL[3]);
+      function draw(){ const pathXY = buildPath(); path.attr('d',line(pathXY)); const len = path.node().getTotalLength(); path.attr('stroke-dasharray', `${len} ${len}`).attr('stroke-dashoffset', len).transition().duration(900).ease(d3.easeCubic).attr('stroke-dashoffset', 0); animateMover(); }
+      function animateMover(){ const len = path.node().getTotalLength(); const speed = +d3.select('#route-speed').property('value'); const dur = d3.scaleLinear().domain([1,10]).range([9000,2000])(speed); mover.interrupt(); function loop(dir=1){ mover.attr('fill', dir>0? TBL[3] : TBL[1]); mover.transition().duration(dur).ease(d3.easeLinear).tween('path', ()=> t=>{ const p = path.node().getPointAtLength(dir>0? t*len : (1-t)*len); mover.attr('cx',p.x).attr('cy',p.y); }).on('end', ()=> loop(-dir)); } loop(1); }
+      draw(); d3.select('#route-speed').on('input', animateMover); d3.select('#route-shuffle').on('click', ()=>{ stops = d3.shuffle(stops.concat([{c:Math.floor(Math.random()*cols), r:Math.floor(Math.random()*rows)}])).slice(0,3); draw(); });
+    })();
+
+    // ------- 3) Bars (unchanged) -------
+    (function(){
+      const {g, inner} = mountSVG('#freq');
+      let data = d3.range(10).map(i=>({k:String.fromCharCode(65+i), v:Math.floor(Math.random()*40+12)}));
+      let desc=true;
+      const x = d3.scaleBand().domain(data.map(d=>d.k)).range([0, inner.w]).padding(0.12);
+      const y = d3.scaleLinear().domain([0, d3.max(data,d=>d.v)]).nice().range([inner.h, 0]);
+      const gx = g.append('g').attr('class','axis').attr('transform',`translate(0,${inner.h})`).call(d3.axisBottom(x));
+      const gy = g.append('g').attr('class','axis').call(d3.axisLeft(y).ticks(6));
+      const bars = g.append('g');
+      function render(){ y.domain([0, d3.max(data,d=>d.v)]).nice(); gy.transition().duration(400).call(d3.axisLeft(y).ticks(6)); const sel = bars.selectAll('rect').data(data, d=>d.k); sel.join( enter=>enter.append('rect').attr('x', d=>x(d.k)).attr('width', x.bandwidth()).attr('y', y(0)).attr('height', 0).attr('fill', TBL[4]).on('mousemove', (e,d)=> showTip(`<b>${d.k}</b>: ${d.v}`, d3.pointer(e))).on('mouseout', hideTip).transition().duration(600).attr('y', d=>y(d.v)).attr('height', d=> y(0)-y(d.v)), update=>update.transition().duration(600).attr('x', d=>x(d.k)).attr('width', x.bandwidth()).attr('y', d=>y(d.v)).attr('height', d=> y(0)-y(d.v)), exit=>exit.transition().duration(300).attr('y', y(0)).attr('height',0).remove() ); }
+      render();
+      d3.select('#bars-sort').on('click', function(){ data.sort((a,b)=> desc? b.v-a.v : d3.ascending(a.k,b.k)); desc = !desc; x.domain(data.map(d=>d.k)); gx.transition().duration(600).call(d3.axisBottom(x)); render(); d3.select(this).text(desc? 'Sort Desc' : 'Sort A–Z'); });
+      d3.select('#bars-shuffle').on('click', ()=>{ data.forEach(d=> d.v = Math.floor(Math.random()*40+12)); render(); });
+    })();
+
+    // ------- 4) Math (unchanged) -------
+    (function(){
+      const {svg, g, inner} = mountSVG('#math');
+      const X = d3.range(0, Math.PI*2, 0.02);
+      let phi = 0; // phase
+      const series = [
+        {name:'sin(x+φ)', color:TBL[6], fn: (x)=>Math.sin(x+phi)},
+        {name:'cos(x+φ)', color:TBL[0], fn: (x)=>Math.cos(x+phi)}
+      ];
+      const x = d3.scaleLinear().domain([0, Math.PI*2]).range([0, inner.w]);
+      const y = d3.scaleLinear().domain([-1.2,1.2]).range([inner.h, 0]);
+      g.append('g').attr('class','axis').attr('transform',`translate(0,${inner.h})`).call(d3.axisBottom(x));
+      g.append('g').attr('class','axis').call(d3.axisLeft(y));
+      const line = d3.line().x(d=>x(d.x)).y(d=>y(d.y));
+      const paths = series.map(s=> g.append('path').attr('fill','none').attr('stroke',s.color).attr('stroke-width',2));
+      function draw(curve=true){ series.forEach((s,i)=>{ const pts = X.map(t=>({x:t, y:s.fn(t)})); const p = paths[i]; if(curve){ const total = p.node().getTotalLength?.()||0; p.attr('d', line(pts)).attr('stroke-dasharray', total? `${total} ${total}`: null).attr('stroke-dashoffset', total).transition().duration(500).attr('stroke-dashoffset', 0); } else { p.transition().duration(200).attr('d', line(pts)); } }); }
+      draw(true);
+      const cursor = g.append('line').attr('y1',0).attr('y2',inner.h).attr('stroke','#94a3b8').attr('stroke-dasharray','3,3');
+      svg.on('mousemove', (e)=>{ const [mx] = d3.pointer(e, g.node()); cursor.attr('x1',mx).attr('x2',mx); });
+      d3.select('#phase').on('input', function(){ phi = +this.value/100; draw(false); });
+    })();
+
+    // ------- 5) Chord Diagram (hover fade + random weights) -------
+    (function(){
+      const {svg, g, inner, width, height} = mountSVG('#chord', {w:820,h:420, margin:{top:10,right:10,bottom:10,left:10}});
+      const R = Math.min(inner.w, inner.h)/2 - 10;
+      const center = g.append('g').attr('transform', `translate(${inner.w/2},${inner.h/2})`);
+      const groups = ['Nav','Rec','Budget','Checkout'];
+      const color = d3.scaleOrdinal().domain(groups).range([TBL[0],TBL[1],TBL[2],TBL[3]]);
+      function randMatrix(){ const n=groups.length; const m=Array.from({length:n},()=>Array.from({length:n},()=>0)); for(let i=0;i<n;i++) for(let j=0;j<n;j++){ m[i][j]= i===j?0:Math.floor(Math.random()*60+10);} return m; }
+      let matrix = randMatrix();
+      const arc = d3.arc().innerRadius(R).outerRadius(R+12);
+      const ribbon = d3.ribbon().radius(R);
+      function draw(){ const layout = d3.chord().padAngle(0.05).sortSubgroups(d3.descending)(matrix); center.selectAll('g.group').data(layout.groups, d=>d.index).join(enter=>{ const gG = enter.append('g').attr('class','group'); gG.append('path').attr('class','arc').attr('d', arc).attr('fill', d=> color(groups[d.index])).attr('stroke','#fff'); gG.append('text').attr('dy',-R-16).attr('text-anchor','middle').text(d=> groups[d.index]).attr('font-size',12).attr('transform', d=>`rotate(${(d.startAngle+d.endAngle)/2*180/Math.PI})`); return gG; }); center.selectAll('path.ribbon').data(layout, d=> d.source.index+'-'+d.target.index).join( enter=> enter.append('path').attr('class','ribbon').attr('d', ribbon).attr('fill', d=> color(groups[d.source.index])).attr('fill-opacity',0.85).attr('stroke','#fff') ); center.selectAll('g.group, path.ribbon').on('mouseover', function(e,d){ const idx = d.index!==undefined? d.index : d.source.index; center.selectAll('path.ribbon').classed('fade', r=> r.source.index!==idx && r.target.index!==idx); center.selectAll('g.group').classed('fade', g=> g.index!==idx); }).on('mouseout', ()=>{ center.selectAll('.fade').classed('fade', false); }); }
+      draw();
+      d3.select('#chord-random').on('click', ()=>{ matrix = randMatrix(); center.selectAll('*').remove(); draw(); });
+      d3.select('#chord-reset').on('click', ()=>{ matrix = [[0,30,20,10],[25,0,35,15],[18,28,0,22],[12,16,26,0]]; center.selectAll('*').remove(); draw(); });
+    })();
+  </script>
+</body>
+</html>
