@@ -2,201 +2,205 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>IDV Assignment 4 – Robustness Benchmark Dashboard (White Theme)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <title>IDV Assignment 5 – Integrated Visualizations</title>
 
   <style>
-    /************************************************************
-     OVERRIDE DARK THEME → FULL WHITE THEME
-    ************************************************************/
-    html, body {
-      background: #ffffff !important;
-      color: #000000 !important;
+    :root {
+      --bg-main: radial-gradient(circle at top, #0f172a 0, #020617 55%, #000 100%);
+      --card-bg: rgba(15, 23, 42, 0.9);
+      --card-border: rgba(148, 163, 184, 0.3);
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.12);
+      --accent-strong: #0ea5e9;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
+      --pill-bg: rgba(15, 118, 110, 0.4);
+      --pill-border: rgba(45, 212, 191, 0.7);
+      --nav-bg: rgba(15, 23, 42, 0.92);
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.75);
+      --radius-xl: 18px;
+      --radius-2xl: 24px;
+      --radius-full: 999px;
+      --transition-fast: 180ms ease-out;
+      --max-width: 1200px;
+    }
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .page { width: 100%; max-width: var(--max-width); margin: 0 auto; padding: 24px 16px 40px; }
+
+    /* HERO */
+    .hero {
+      margin-top: 20px;
+      margin-bottom: 16px;
+      padding: 28px 24px 24px;
+      border-radius: var(--radius-2xl);
+      background: linear-gradient(135deg, rgba(56,189,248,0.18), rgba(59,130,246,0)),
+                  radial-gradient(circle at top left, rgba(96,165,250,0.35), transparent 60%),
+                  rgba(15,23,42,0.96);
+      border: 1px solid rgba(148,163,184,0.35);
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
     }
 
-    /* Override all backgrounds to white */
-    * {
-      background: #ffffff !important;
-      background-color: #ffffff !important;
-      color: #000000 !important;
-      box-shadow: none !important;
-      border-color: #dddddd !important;
+    .hero-title { font-size: 2.4rem; margin: 0 0 8px; }
+    .hero-subtitle { color: var(--text-muted); font-size: 0.98rem; max-width: 44rem; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 11px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--pill-border);
+      background: var(--pill-bg);
+      font-size: 0.78rem;
+      letter-spacing: 0.09em;
+      color: #ccfbf1;
+      margin-right: 6px;
     }
 
-    /* Make SVG white as well */
-    svg {
-      background: #ffffff !important;
+    /* NAV */
+    .nav-shell { position: sticky; top: 0; z-index: 20; margin-bottom: 14px; }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: var(--radius-full);
+      background: var(--nav-bg);
+      border: 1px solid rgba(148,163,184,0.4);
+      backdrop-filter: blur(18px);
+    }
+    .nav-links { display: flex; gap: 6px; }
+    .nav-link {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.82rem;
+    }
+    .nav-link:hover { border-color: rgba(148,163,184,0.7); color: #e5e7eb; }
+    .nav-link.active { background: var(--accent-soft); border-color: var(--accent-strong); color: #e0f2fe; }
+
+    /* SECTION CARD */
+    .assignment-section {
+      margin-bottom: 28px;
+      padding: 22px 18px 20px;
+      border-radius: var(--radius-2xl);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 18px 40px rgba(15,23,42,0.9);
     }
 
-    /* Tooltips become light */
-    .tooltip {
-      background: #ffffff !important;
-      color: #000000 !important;
-      border: 1px solid #cccccc !important;
-      box-shadow: none !important;
+    .assignment-heading { margin: 0 0 8px; font-size: 1.2rem; }
+    .assignment-description { color: var(--text-muted); font-size: 0.9rem; }
+
+    .assignment-frame { margin-top: 10px; border-radius: 16px; overflow: hidden; }
+    .assignment-frame iframe {
+      width: 100%;
+      min-height: 520px;
+      border: none;
+      background: #020617;
     }
 
-    /* Dropdowns */
-    select {
-      background: #ffffff !important;
-      color: #000000 !important;
-      border: 1px solid #999999 !important;
-    }
-
-    select:focus {
-      outline: none !important;
-      box-shadow: none !important;
-      border-color: #555555 !important;
-    }
-
-    /* Remove radial background from cards (force white) */
-    .card, header, aside {
-      background: #ffffff !important;
-    }
-
-    /* Axes text */
-    .axis text {
-      fill: #000000 !important;
-    }
-
-    .axis path, .axis line {
-      stroke: #bbbbbb !important;
-    }
-
-    /* Grid lines */
-    .y-grid line {
-      stroke: #e6e6e6 !important;
-    }
-
-    /* Pills & badges */
-    .header-badge, .pill {
-      background: #ffffff !important;
-      color: #000000 !important;
-      border: 1px solid #cccccc !important;
-    }
-
-    /* Stats boxes */
-    .stat {
-      background: #fafafa !important;
-      border: 1px solid #dddddd !important;
-    }
-
+    footer { margin-top: 26px; text-align: right; font-size: 0.75rem; color: var(--text-muted); }
   </style>
 </head>
 
 <body>
 <div class="page">
 
-  <header>
-    <h1>Robustness Benchmark Dashboard (White Theme)</h1>
-    <p>
-      Interactive D3.js visualisation for IDV Assignment 4.
-      The first chart explores <strong>methods × metrics × datasets</strong> (data_1.json),
-      and the second chart uses a <strong>heatmap for methods × attacks</strong> (data_2.json).
+  <!-- HERO -->
+  <header class="hero" id="overview">
+    <h1 class="hero-title">IDV Assignment 5 – Integrated Visualizations</h1>
+    <p class="hero-subtitle">
+      This single-page dashboard integrates Assignment 1–4 into a unified, aesthetically
+      consistent layout while preserving all original functionalities.
     </p>
-    <div class="badge-row">
-      <span class="header-badge">Data-Driven · D3.js · GitHub Pages</span>
-      <span class="header-badge">Std Acc · CRR · CRA · Attack Heatmap</span>
+    <div>
+      <span class="pill">A1 – A4 Combined</span>
+      <span class="pill">Unified Dark Theme</span>
+      <span class="pill">Fully Functional</span>
     </div>
   </header>
 
-  <!-- TOP LAYOUT -->
-  <div class="layout-top">
-
-    <!-- CHART 1 -->
-    <section class="card">
-      <div class="card-inner">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Metrics View</div>
-            <div class="card-subtitle" id="chartSubtitle">
-              Loading metric & dataset…
-            </div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <div class="control-group">
-            <span class="control-label">Metric</span>
-            <select id="metricSelect"></select>
-          </div>
-          <div class="control-group">
-            <span class="control-label">Dataset</span>
-            <select id="datasetSelect"></select>
-          </div>
-        </div>
-
-        <div id="chart-container">
-          <svg id="chartSvg" viewBox="0 0 900 420"></svg>
-        </div>
+  <!-- NAV -->
+  <div class="nav-shell">
+    <nav class="nav">
+      <div class="nav-links">
+        <button class="nav-link active" data-target="#overview">Overview</button>
+        <button class="nav-link" data-target="#a1">A1 PSI Table</button>
+        <button class="nav-link" data-target="#a2">A2 SVG Grid</button>
+        <button class="nav-link" data-target="#a3">A3 Charts</button>
+        <button class="nav-link" data-target="#a4">A4 Dashboard</button>
       </div>
-    </section>
-
-    <!-- SIDE PANEL -->
-    <aside class="card">
-      <div class="card-inner">
-        <div class="side-title">Current View</div>
-
-        <div id="currentPills"></div>
-        <div class="stat-grid" id="statGrid"></div>
-        <div class="legend" id="legendBox"></div>
-
-        <div class="hint">
-          • Hover bars to inspect values.<br/>
-          • Animated transitions enabled.<br/>
-        </div>
-      </div>
-    </aside>
+    </nav>
   </div>
 
-  <!-- HEATMAP SECTION -->
-  <div class="layout-bottom">
-    <section class="card">
-      <div class="card-inner">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Attacks Heatmap</div>
-            <div class="card-subtitle" id="chart2Subtitle">
-              Accuracy of methods under different attacks (data_2.json)
-            </div>
-          </div>
-        </div>
+  <!-- A1 -->
+  <section class="assignment-section" id="a1">
+    <h2 class="assignment-heading">Assignment 1 – PSI Realtime Table</h2>
+    <p class="assignment-description">Original API-driven PSI table preserved through iframe embedding.</p>
 
-        <div class="controls-wide">
-          <div class="control-group">
-            <span class="control-label">Attack order</span>
-            <select id="attackSortSelect">
-              <option value="original">Original order</option>
-              <option value="alpha">A → Z</option>
-              <option value="meanDesc">Mean: high → low</option>
-              <option value="meanAsc">Mean: low → high</option>
-            </select>
-          </div>
+    <div class="assignment-frame">
+      <iframe src="IDV-assignment1-main/index.html" loading="lazy"></iframe>
+    </div>
+  </section>
 
-          <div class="control-group">
-            <span class="control-label">Highlight method</span>
-            <select id="highlightMethodSelect">
-              <option value="all">All methods</option>
-            </select>
-          </div>
-        </div>
+  <!-- A2 -->
+  <section class="assignment-section" id="a2">
+    <h2 class="assignment-heading">Assignment 2 – SVG Transformations Grid</h2>
+    <p class="assignment-description">10×5 SVG transformation table, original visual structure intact.</p>
 
-        <div id="chart2-container">
-          <svg id="chart2Svg" viewBox="0 0 900 380"></svg>
-        </div>
-      </div>
-    </section>
-  </div>
+    <div class="assignment-frame">
+      <iframe src="IDV-assignment2.github.io-main/index.html" loading="lazy"></iframe>
+    </div>
+  </section>
 
+  <!-- A3 -->
+  <section class="assignment-section" id="a3">
+    <h2 class="assignment-heading">Assignment 3 – Five D3 Charts</h2>
+    <p class="assignment-description">D3-based linked charts including Venn, Chord, Line, and Bar charts.</p>
+
+    <div class="assignment-frame">
+      <iframe src="IDV-assignment3.github.io-main/index.html" loading="lazy"></iframe>
+    </div>
+  </section>
+
+  <!-- A4 -->
+  <section class="assignment-section" id="a4">
+    <h2 class="assignment-heading">Assignment 4 – Robustness Benchmark Dashboard</h2>
+    <p class="assignment-description">Interactive model robustness dashboard using JSON + D3.js.</p>
+
+    <div class="assignment-frame">
+      <iframe src="IDV-assignment4.github.io-main/index.html" loading="lazy"></iframe>
+    </div>
+  </section>
+
+  <footer>IDV Assignment 5 – Unified Visualization Page</footer>
 </div>
 
-<div class="tooltip" id="tooltip"></div>
-
-
-<!-- ORIGINAL JAVASCRIPT REMAINS UNCHANGED BELOW -->
 <script>
-/* 你的全部 JS 保持不变（已从你文件引用） */
+  const links = document.querySelectorAll(".nav-link");
+  links.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.getAttribute("data-target");
+      document.querySelector(target).scrollIntoView({ behavior: "smooth" });
+    });
+  });
 </script>
 
 </body>
